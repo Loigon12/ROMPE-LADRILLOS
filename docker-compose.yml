@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Contenedor 1: Base de datos (PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: pacmandb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Contenedor 2: Backend (Node.js)
+  backend:
+    build: ./backend
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: secretpassword
+      DB_HOST: db
+      DB_NAME: pacmandb
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  # Contenedor 3: Frontend (Nginx)
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rompe Ladrillos | Dockerizado</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        
+        <!-- Dimensiones de la pantalla en donde se desarrolla el juego -->
+        <canvas id="gameCanvas" width="700" height="700"></canvas>
+        
+        <!-- Panel para mostrar puntuación y botones de acción -->
+        <div class="ui-panel">
+            <p>Puntos: <span id="score">0</span></p>
+            <button id="saveScoreBtn">Guardar Puntuación</button>
+            <button id="resetBtn">Reiniciar Juego</button>
+        </div>
+    </div>
+    <!-- Archivo JavaScript del juego -->
+    <script src="game.js"></script>
+</body>
+</html>
