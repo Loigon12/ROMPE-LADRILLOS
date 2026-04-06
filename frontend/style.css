@@ -10,15 +10,40 @@ body {
 }
 .container {
     text-align: center;
+    width: 720px; /* canvas 700 + margen */
+    position: relative;
 }
-canvas {
-    background-color: #000;
-    border: 2px solid #333;
-    box-shadow: 0 0 15px rgba(255, 255, 0, 0.2);
-}
-.ui-panel {
-    margin-top: 20px;
-}
+/* Canvas */
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background-color: #000;
+            border: 2px solid #333;
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.2);
+        }
+/* Panel UI debajo del canvas */
+        .ui-panel {
+            margin-top: 12px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .ui-panel p { margin: 0; font-weight: bold; }
+
+        /* Botones pequeños */
+        .ui-panel button {
+            background-color: #ffcc00;
+            color: #000;
+            border: none;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 4px;
+        }
+        .ui-panel button:hover { background-color: #ffdb4d; }
 button {
     background-color: #ffcc00;
     color: #000;
@@ -40,7 +65,7 @@ button:hover {
     padding: 15px 30px; 
     font-size: 20px; 
     cursor: pointer; 
-    background: #ff7300; 
+    background-color: #ff7300; 
     color: white; 
     border: none; 
     font-weight: bold;

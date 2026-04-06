@@ -8,17 +8,25 @@
 </head>
 <body>
     <div class="container">
-        
-        <!-- Dimensiones de la pantalla en donde se desarrolla el juego -->
+        <!-- Canvas del juego -->
         <canvas id="gameCanvas" width="700" height="700"></canvas>
-        
-        <!-- Panel para mostrar puntuación y botones de acción -->
-        <div class="ui-panel">
-            <p>Puntos: <span id="score">0</span></p>
-            <button id="saveScoreBtn">Guardar Puntuación</button>
+
+        <!-- Overlay centrado para Game Over y botón grande de reinicio -->
+        <div id="gameOverOverlay" class="game-over-overlay" aria-hidden="true">
+            
             <button id="resetBtn">Reiniciar Juego</button>
         </div>
+
+        <!-- Panel para puntuación y botones secundarios -->
+        <div class="ui-panel" role="region" aria-label="Panel de control">
+            <p>Puntuación: <span id="score">0</span></p>
+            <button id="saveScoreBtn">Guardar Puntuación</button>
+            <!-- Botón pequeño de reinicio (opcional) -->
+            <a href="docker.html" target="_blank"><button id="resetBtnSmall"  style="background:#00ccff;color:#000000;border-radius:4px;">Documentación Docker</button></a>
+        </div>
     </div>
+
+    
     <!-- Archivo JavaScript del juego -->
     <script src="game.js"></script>
 </body>

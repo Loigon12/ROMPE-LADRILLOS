@@ -16,21 +16,21 @@ let gameWin = false;
 let animationId; 
 
 // --- CONFIGURACIÓN ---
-const paddleHeight = 12;
-const paddleWidth = 100; 
-let paddleX = (canvas.width - paddleWidth) / 2;
-const paddleSpeed = 4; 
+const paddleHeight = 12; // Altura de la paleta
+const paddleWidth = 100;  // Ancho de la paleta
+let paddleX = (canvas.width - paddleWidth) / 2; // Posición inicial de la paleta
+const paddleSpeed = 6;  // Velocidad de movimiento de la paleta
 
 let x, y, dx, dy;
-const ballRadius = 8;
+const ballRadius = 8; // Radio de la bola
 
-const brickRowCount = 6;
-const brickColumnCount = 9;
-const brickWidth = 65;
-const brickHeight = 25;
-const brickPadding = 10;
-const brickOffsetTop = 50;
-const brickOffsetLeft = 15;
+const brickRowCount = 6; // Número de filas de ladrillos (puede ser ajustado para más dificultad)
+const brickColumnCount = 9; // Número de columnas de ladrillos (puede ser ajustado para más dificultad)
+const brickWidth = 65; // Ancho de cada ladrillo (ajustado para que quepan 9 columnas con padding)
+const brickHeight = 25; // Altura de cada ladrillo
+const brickPadding = 5; // Espacio entre ladrillos
+const brickOffsetTop = 50; // Distancia desde la parte superior del canvas hasta la primera fila de ladrillos
+const brickOffsetLeft = 15; // Distancia desde el borde izquierdo del canvas hasta la primera columna de ladrillos
 let bricks = [];
 
 // --- INICIALIZACIÓN ---
@@ -53,8 +53,8 @@ function initVariables() {
     const maxX = canvas.width * 0.8;
     x = Math.floor(Math.random() * (maxX - minX + 1)) + minX;
     y = canvas.height - 40;
-    dx = (Math.random() < 0.5 ? 3 : -3); 
-    dy = -3;
+    dx = (Math.random() < 0.5 ? 4.0 : -4.0);  // Velocidad inicial aleatoria
+    dy = -4.0;
 
     paddleX = (canvas.width - paddleWidth) / 2;
 
@@ -148,7 +148,7 @@ function draw() {
         ctx.font = "bold 32px Courier New";
         ctx.fillStyle = gameWin ? "#00FF00" : "#FF0000";
         ctx.textAlign = "center";
-        ctx.fillText(gameWin ? "¡VICTORIA!" : "GAME OVER", canvas.width / 2, canvas.height / 2);
+        ctx.fillText(gameWin ? "¡HAS GANADO!" : "PERDISTE", canvas.width / 2, canvas.height / 2);
         
         // MOSTRAR BOTÓN AL FINALIZAR
         resetBtn.style.display = "inline-block";

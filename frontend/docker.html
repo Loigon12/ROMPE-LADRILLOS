@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Documentación Técnica - Rompe Ladrillos (Docker)</title>
+    <link rel="stylesheet" href="estilos.css" />
+</head>
+<body>
+
+<header>
+    <h1>Documentación Técnica — Rompe Ladrillos (Dockerizado)</h1>
+    <div class="small">Proyecto dockerizado con Frontend (Nginx), Backend (Node.js/Express) y PostgreSQL</div>
+</header>
+
+<nav>
+    <a href="#arquitectura">Arquitectura</a>
+    <a href="#frontend">Frontend</a>
+    <a href="#backend">Backend</a>
+    <a href="#bd">Base de Datos</a>
+    <a href="#infra">Infraestructura / Docker</a>
+    <a href="#despliegue">Guía de Despliegue</a>
+</nav>
+
+<main class="container">
+
+    <!-- Introducción -->
+    <section id="introduccion" class="card">
+        <h2>Introducción</h2>
+        <p class="muted">Resumen del proyecto y objetivo técnico.</p>
+        <p>
+            Este proyecto consiste en una plataforma web de videojuego retro (Rompe Ladrillos) diseñada bajo una arquitectura de microservicios mediante contenedores.
+            La idea central es separar responsabilidades en tres contenedores independientes (Frontend, Backend y Database) para facilitar despliegue, escalado y mantenimiento.
+        </p>
+        <div class="note">
+            <strong>Frase tomada del documento:</strong>
+            <div class="small">"Este proyecto consiste en una plataforma web de videojuego retro (Rompe Ladrillos) diseñada bajo una arquitectura de microservicios mediante contenedores." </div>
+        </div>
+    </section>
+
+    <!-- Arquitectura del sistema -->
+    <section id="arquitectura" class="card">
+        <h2>Arquitectura del Sistema</h2>
+        <p class="muted">Descripción de las capas y cómo se comunican.</p>
+
+        <div class="grid">
+            <div>
+                <h3>Capas</h3>
+                <ul>
+                    <li><strong>Capa de Presentación (Frontend):</strong> Servidor Nginx que entrega archivos estáticos (HTML/CSS/JS) y el motor de renderizado del juego (Canvas).</li>
+                    <li><strong>Capa de Aplicación (Backend):</strong> API REST en Node.js + Express que gestiona la lógica del juego, endpoints y la persistencia de puntuaciones.</li>
+                    <li><strong>Capa de Datos (Database):</strong> PostgreSQL para almacenamiento persistente de récords y datos relacionados.</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Comunicación</h3>
+                <ul>
+                    <li>Los contenedores se comunican mediante una red interna definida en Docker Compose; el backend accede a la base de datos por el nombre de servicio (ej. <code>db</code>).</li>
+                    <li>El frontend realiza llamadas HTTP al backend (por ejemplo, <code>/api/score</code>) para guardar puntuaciones.</li>
+                    <li>Se recomienda usar variables de entorno para credenciales y configuración de red.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Especificaciones del Frontend -->
+    <section id="frontend" class="card">
+        <h2>Especificaciones del Frontend</h2>
+        <p class="muted">Tecnologías y detalles del motor de renderizado.</p>
+
+        <ul>
+            <li><strong>Tecnologías:</strong> HTML5, CSS, JavaScript (Canvas API).</li>
+            <li><strong>Renderizado:</strong> El núcleo del juego usa el API <code>Canvas</code> de HTML5 para dibujar ladrillos, pelota y paleta.</li>
+            <li><strong>Dimensiones:</strong> Canvas de <strong>700 x 700</strong> píxeles (configurable).</li>
+            <li><strong>Lógica de juego:</strong> Archivo <code>game.js</code> con motor de colisiones, estados (gameOver, gameWin) y manejo del DOM para botones y puntuación.</li>
+            <li><strong>Interfaz:</strong> Sistema de estados con botones de reinicio y guardado de puntuación; Nginx sirve los archivos estáticos desde <code>/usr/share/nginx/html</code>.</li>
+        </ul>
+
+        <div class="small">
+            <strong>Notas de implementación:</strong> Mantener separación entre la lógica de renderizado y la lógica de persistencia (llamadas al backend). Evitar llamadas sincrónicas en el bucle de render.
+        </div>
+    </section>
+
+    <!-- Especificaciones del Backend -->
+    <section id="backend" class="card">
+        <h2>Especificaciones del Backend</h2>
+        <p class="muted">API REST, endpoints y manejo de la base de datos.</p>
+
+        <div class="grid">
+            <div>
+                <h3>Stack</h3>
+                <ul>
+                    <li><strong>Node.js</strong> (ej. <code>node:18-alpine</code> en Dockerfile)</li>
+                    <li><strong>Express</strong> para enrutamiento y manejo de peticiones HTTP</li>
+                    <li><strong>pg (node-postgres)</strong> para conexión con PostgreSQL</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Endpoints principales</h3>
+                <ul>
+                    <li><code>POST /api/score</code> — Recibe JSON con <code>{ player, score }</code> y realiza INSERT en la tabla <code>scores</code>.</li>
+                    <li>Validaciones: comprobar conexión a la DB antes de ejecutar operaciones; sanitizar entrada.</li>
+                    <li>Manejo de errores: implementar reintentos (retries) al arrancar para esperar a que la base de datos esté lista.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h4>Ejemplo básico de endpoint</h4>
+        <pre class="code">
+/* Ejemplo simplificado (Node.js + Express) */
+app.post('/api/score', async (req, res) =&gt; {
+  const { player, score } = req.body;
+  try {
+    await db.query('INSERT INTO scores (player, score, created_at) VALUES ($1,$2,NOW())', [player, score]);
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+        </pre>
+    </section>
+
+    <!-- Diseño de la Base de Datos -->
+    <section id="bd" class="card">
+        <h2>Diseño de Base de Datos</h2>
+        <p class="muted">Esquema y consideraciones.</p>
+
+        <table>
+            <thead>
+                <tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>id</strong></td><td>SERIAL (PK)</td><td>Identificador único autoincremental.</td></tr>
+                <tr><td><strong>player</strong></td><td>VARCHAR(50)</td><td>Nombre o identificador del jugador.</td></tr>
+                <tr><td><strong>score</strong></td><td>INTEGER</td><td>Puntuación obtenida en la sesión.</td></tr>
+                <tr><td><strong>created_at</strong></td><td>TIMESTAMP</td><td>Fecha y hora del registro.</td></tr>
+            </tbody>
+        </table>
+
+        <h4>Consideraciones</h4>
+        <ul>
+            <li>Usar índices si se prevé consultas por <code>player</code> o rangos de puntuación.</li>
+            <li>Configurar backups periódicos del volumen de PostgreSQL.</li>
+            <li>Usar transacciones para operaciones compuestas si se añaden más tablas relacionadas.</li>
+        </ul>
+    </section>
+
+    <!-- Infraestructura y Dockerización -->
+    <section id="infra" class="card">
+        <h2>Infraestructura y Dockerización</h2>
+        <p class="muted">Cómo se dockeriza cada componente y recomendaciones.</p>
+
+        <div class="grid">
+            <div>
+                <h3>Dockerfiles</h3>
+                <ul>
+                    <li><strong>Frontend</strong>: <code>FROM nginx:alpine</code>, copiar archivos estáticos a <code>/usr/share/nginx/html</code>, exponer puerto 8080 (host).</li>
+                    <li><strong>Backend</strong>: <code>FROM node:18-alpine</code>, copiar código, ejecutar <code>npm install</code>, exponer puerto 3000.</li>
+                    <li><strong>Database</strong>: usar imagen oficial <code>postgres:15-alpine</code> o similar; definir variables de entorno <code>POSTGRES_USER</code>, <code>POSTGRES_PASSWORD</code>, <code>POSTGRES_DB</code>.</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Docker Compose</h3>
+                <p class="small">El archivo <code>docker-compose.yml</code> define servicios, red y volúmenes.</p>
+                <pre class="code">
+version: '3.8'
+services:
+  frontend:
+    build: ./frontend
+    image: rompe-ladrillos-frontend:latest
+    ports: ['8080:80']
+    depends_on: ['backend']
+    networks: appnet
+
+  backend:
+    build: ./backend
+    image: rompe-ladrillos-backend:latest
+    ports: ['3000:3000']
+    environment:
+      - DATABASE_HOST=db
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=secret
+      - DATABASE_NAME=rompe
+    depends_on: ['db']
+    networks: appnet
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=rompe
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: appnet
+
+volumes:
+  pgdata:
+
+networks:
+  appnet:
+    driver: bridge
+                </pre>
+                <div class="small">Los contenedores se comunican por nombres de servicio (ej: el backend busca el host <code>db</code>).</div>
+            </div>
+        </div>
+
+        <div class="note" style="margin-top:12px">
+            <strong>Frase tomada del documento:</strong>
+            <div class="small">"La portabilidad se logra mediante la creación de imágenes personalizadas y la orquestación." </div>
+        </div>
+
+        <h4>Volúmenes y persistencia</h4>
+        <ul>
+            <li>Usar un volumen persistente (ej. <code>pgdata</code>) para que las puntuaciones no se pierdan al reiniciar contenedores.</li>
+            <li>Para el frontend y backend, montar volúmenes en desarrollo para hot-reload; en producción usar imágenes inmutables.</li>
+        </ul>
+    </section>
+
+    <!-- Guía de despliegue -->
+    <section id="despliegue" class="card">
+        <h2>Guía de Despliegue (Manual de Operación)</h2>
+        <p class="muted">Pasos para construir y ejecutar el sistema en local con Docker Desktop.</p>
+
+        <ol>
+            <li><strong>Requisitos:</strong> Tener Docker Desktop instalado y en estado <em>Running</em>.</li>
+            <li><strong>Construcción y arranque:</strong> Abrir terminal en la raíz del proyecto y ejecutar:
+                <pre class="code">docker-compose up --build -d</pre>
+            </li>
+            <li><strong>Acceso:</strong>
+                <ul>
+                    <li>Juego en local: <code>http://localhost:8080</code></li>
+                    <li>API: <code>http://localhost:3000</code></li>
+                </ul>
+            </li>
+            <li><strong>Depuración:</strong> Ver logs con:
+                <pre class="code">docker logs -f &lt;nombre_contenedor&gt;</pre>
+            </li>
+            <li><strong>Mantenimiento:</strong> Para detener y eliminar contenedores:
+                <pre class="code">docker-compose down</pre>
+            </li>
+        </ol>
+
+        <h4>Consejos operativos</h4>
+        <ul>
+            <li>Si el backend falla al arrancar por falta de DB, implementar reintentos en el arranque (esperar y reintentar la conexión).</li>
+            <li>Comprobar que el volumen <code>pgdata</code> tenga permisos correctos y espacio suficiente.</li>
+            <li>En entornos de producción, usar variables de entorno seguras y no almacenar contraseñas en texto plano.</li>
+        </ul>
+    </section>
+
+    <!-- Apéndice: archivos y comandos útiles -->
+    <section id="apendice" class="card">
+        <h2>Apéndice: Archivos y comandos útiles</h2>
+
+        <div class="grid">
+            <div>
+                <h4>Dockerfile - Frontend (ejemplo)</h4>
+                <pre class="code">
+FROM nginx:alpine
+COPY ./dist /usr/share/nginx/html
+EXPOSE 80
+                </pre>
+            </div>
+
+            <div>
+                <h4>Dockerfile - Backend (ejemplo)</h4>
+                <pre class="code">
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --production
+COPY . .
+EXPOSE 3000
+CMD ["node","index.js"]
+                </pre>
+            </div>
+        </div>
+
+        <h4>Comandos rápidos</h4>
+        <ul>
+            <li><code>docker-compose up --build -d</code> — Construir y levantar en segundo plano.</li>
+            <li><code>docker-compose logs -f backend</code> — Seguir logs del backend.</li>
+            <li><code>docker exec -it &lt;db_container&gt; psql -U postgres -d rompe</code> — Acceder a la DB desde el contenedor.</li>
+        </ul>
+    </section>
+
+</main>
+
+<footer>
+    Documentación generada a partir del material del proyecto. Para detalles de implementación revisar los Dockerfiles, docker-compose.yml y el código fuente en los directorios <code>/frontend</code>, <code>/backend</code> y la configuración de la base de datos.
+</footer>
+
+</body>
+</html>
